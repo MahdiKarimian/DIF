@@ -2,6 +2,45 @@
 
 This code is DNA image footprinting and matching. The main idea is to **convert a DNA sequence to an image** to find any related sequences in the image with common algorithms. The goal of the project is to generate a platform like the Google Map service to find, search and match any sequences.
 
+### How to run
+
+First install requirements: 
+
+```` 
+pip install -r requirements.txt
+```` 
+
+Then run the code for Fasta file sample
+
+```` 
+python dif.py -o test.png -i sequence.fasta -size 1000
+```` 
+You should see a test.png like this in folder
+
+!["test output file"](./img/test.png)
+
+
+The other option is using **DnaFootprint.ipynb** file with Jupyter
+ 
+#### Advance option
+
+```` 
+python dif.py -o test.png -i sequence.fasta -size 1000 -plotsize 4000000
+```` 
+
+##### plotsize
+
+This parameter limit the plot size 
+
+##### recordid
+
+If you don't mention recordid. The code uses the first id of file. If you want to use a known recordid use this code
+
+
+```` 
+python dif.py -o test.png -i sequence.fasta -size 1000 -recordid chr0 -plotsize 4000000
+```` 
+
 
 ### Sequence comparision
 For example, with this footprint, we can compare the sequence of "Human Genome" and "Chimpanzee Genome". As the pictures show, you can find any similarities and dissimilarities in the sequences that are related to this comparison.
