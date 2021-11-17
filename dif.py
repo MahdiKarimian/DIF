@@ -18,27 +18,30 @@ def get_args():
     parser = argparse.ArgumentParser(
         description='python dif.py -o test.png -i sequence.fasta -size 1000')
 
-    parser.add_argument('-i',
-                        type=str,
-                        help='fasta input file name',
-                        required=True)
+    parser.add_argument('file',
+                        type=argparse.FileType('rt'),
+                        help='FASTA input file')
 
     parser.add_argument('-o',
+                        '--outfile',
                         type=str,
-                        help='image output file name',
+                        help='Image output file name',
                         required=True)
 
-    parser.add_argument('-size',
+    parser.add_argument('-s',
+                        '--size',
                         type=int,
-                        help='image output size 1000-30000',
-                        required=True)
+                        help='Image output size (1000-30000)',
+                        default=1000)
 
-    parser.add_argument('-recordid',
+    parser.add_argument('-r',
+                        '--recordid',
                         type=str,
                         default='*',
-                        help='image output size 1000-30000')
+                        help='Record ID')
 
-    parser.add_argument('-plotsize',
+    parser.add_argument('-p',
+                        '--plotsize',
                         type=int,
                         default=10000000,
                         help='Limit the size of plot default 10M')
@@ -48,21 +51,21 @@ def get_args():
     return args
 
 
-class option:
-    imageSize = args.size  # output image size, 30000 for big sequence
-    gainxy = 0.2  # zoom the sequence, this parameter is in development phase
-    seqColor = [(255, 0, 0, 255), (0, 255, 0, 255), (0, 0, 255, 255),
-                (128, 128, 128, 255)]  #color for 'A' , 'C','T', 'G'
-    maxNuclDistancePx = 5  #Advance parameter: max distance of two nucletide in graph
-
-
 # --------------------------------------------------
 def main():
     """The Good Stuff"""
-    fastaFileName = str(args.i)
+
+    args = get_args()
+
+    class option:
+        imageSize = args.size  # output image size, 30000 for big sequence
+        gainxy = 0.2  # zoom the sequence, this parameter is in development phase
+        seqColor = [(255, 0, 0, 255), (0, 255, 0, 255), (0, 0, 255, 255),
+                    (128, 128, 128, 255)]  #color for 'A' , 'C','T', 'G'
+        maxNuclDistancePx = 5  #Advance parameter: max distance of two nucletide in graph
 
     # if you want another seq
-    for record in SeqIO.parse(fastaFileName, "fasta"):
+    for record in SeqIO.parse(args.file, "fasta"):
         if (record.id == args.recordid):
             print(record.id)
             break
@@ -184,7 +187,7 @@ def main():
         #imshow(image)
 
     image = generateFootprint(record.seq[:args.plotsize], option)
-    cv2.imwrite(str(args.o), image)
+    cv2.imwrite(str(args.outfile), image)
     print("end of Generating image")
 
 
