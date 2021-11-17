@@ -1,4 +1,10 @@
-# open a fasta file as string
+#!/usr/bin/env python3
+
+"""
+Author : Mahdi Karimian
+Purpose: Convert DNA sequence to image
+"""
+
 from Bio import SeqIO
 from matplotlib.pyplot import imshow
 import numpy as np
