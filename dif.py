@@ -26,7 +26,7 @@ class Options(NamedTuple):
     """ Settings """
     imageSize: int  # Output image size, 30000 for big sequence
     gainxy: float  # Zoom the sequence, this parameter is in development phase
-    seqColor: List[tuple]  # Color for 'A' , 'C','T', 'G'
+    seqColor: List[tuple]  # Color for 'A' , 'C', 'T', 'G'
     maxNuclDistancePx: int  # Advance parameter: max distance of two nucletide in graph
 
 
@@ -34,39 +34,48 @@ class Options(NamedTuple):
 def get_args():
     """Get command-line arguments"""
     parser = argparse.ArgumentParser(
-        description='python dif.py -o test.png -i sequence.fasta -size 1000')
+        description='Convert DNA sequence to image')
 
     parser.add_argument('file',
                         type=argparse.FileType('rt'),
+                        metavar='FILE',
                         help='FASTA input file')
 
     parser.add_argument('-o',
                         '--outfile',
                         type=str,
+                        metavar='FILE',
                         help='Image output file name',
                         required=True)
 
     parser.add_argument('-s',
                         '--size',
                         type=int,
+                        metavar='INT',
                         help='Image output size (1000-30000)',
                         default=1000)
 
     parser.add_argument('-r',
                         '--recordid',
                         type=str,
+                        metavar='SEQ',
                         default='*',
                         help='Record ID')
 
     parser.add_argument('-p',
                         '--plotsize',
                         type=int,
+                        metavar='INT',
                         default=10000000,
                         help='Limit the size of plot default 10M')
 
     args = parser.parse_args()
 
-    return args
+    if not 1000 <= args.size <= 30000:
+        parser.error(f'--size ({args.size}) must be between 1000 and 30,000.')
+
+    return Args(args.file, args.outfile, args.size, args.recordid,
+                args.plotsize)
 
 
 # --------------------------------------------------
