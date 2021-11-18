@@ -244,7 +244,7 @@ def test_get_coords() -> None:
     """ Test get_coords """
 
     steps = get_steps(1)
-    
+
     # Unrecognized residue
     assert get_coords(steps, '', (0, 0)) == (0, 0)
     assert get_coords(steps, 'm', (0, 0)) == (0, 0)
