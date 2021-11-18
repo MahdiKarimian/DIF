@@ -26,7 +26,7 @@ class Options(NamedTuple):
     """ Settings """
     image_size: int  # Output image size, 30000 for big sequence
     gain_xy: float  # Zoom the sequence, this parameter is in development phase
-    seq_color: List[tuple]  # Color for 'A' , 'C', 'T', 'G'
+    seq_color: dict[tuple]  # Color for 'A' , 'C', 'T', 'G'
     max_nucl_distance_px: int  # Advance parameter: max distance of two nucletide in graph
 
 
@@ -84,8 +84,8 @@ def main():
 
     args = get_args()
 
-    option = Options(args.size, 0.2, [(255, 0, 0, 255), (0, 255, 0, 255),
-                                      (0, 0, 255, 255), (128, 128, 128, 255)],
+    option = Options(args.size, 0.2, {'a': (255, 0, 0, 255),'c': (0, 255, 0, 255),
+                                      't': (0, 0, 255, 255), 'g': (128, 128, 128, 255)},
                      5)
 
     # if you want another seq
@@ -128,60 +128,32 @@ def generate_footprint(seq, option):
     image = np.zeros((height, width, 4), np.uint8)
 
     state = 'a'  #satte for many same nucletide in series TODO now deleted after 5000 sample
+    prev_base = ''
     st_count = 0
 
-    for c in seq:
+    for base in seq.lower():
 
-        if (c == 'a' or c == 'A'):
-            in_val = 0
-            if (state == 'a'):
-                st_count = st_count + 1
-            else:
-                st_count = 0
-            if (st_count == 100):
-                print("st_count a reach 5000")
-                continue
-        elif (c == 'c' or c == 'C'):
-            in_val = 1
-            if (state == 'c'):
-                st_count = st_count + 1
-            else:
-                st_count = 0
-            if (st_count == 100):
-                print("st_count c reach 5000")
-                continue
-        elif (c == 't' or c == 'T'):
-            in_val = 2
-            if (state == 't'):
-                st_count = st_count + 1
-            else:
-                st_count = 0
-            if (st_count == 100):
-                print("st_count t reach 5000")
-                continue
-
-        elif (c == 'g' or c == 'G'):
-            in_val = 3
-            if (state == 'g'):
-                st_count = st_count + 1
-            else:
-                st_count = 0
-            if (st_count == 100):
-                print("st_count g reach 5000")
-                continue
+        if base == 'a':
+            x2, y2 = x1 + int(inc_val * 2), y1 + inc_val
+        elif base == 'c':
+            x2, y2 = x1 - inc_val, y1 + inc_val
+        elif base == 't':
+            x2, y2 = x1 - int(inc_val * 2), y1 - inc_val
+        elif base == 'g':
+            x2, y2 = x1 + inc_val, y1 - inc_val
         else:
-            #print('error char is ',c)
             continue
 
-        #print(in_val)
-        if (in_val == 0):
-            x2, y2 = x1 + int(inc_val * 2), y1 + inc_val
-        elif (in_val == 1):
-            x2, y2 = x1 - inc_val, y1 + inc_val
-        elif (in_val == 2):
-            x2, y2 = x1 - int(inc_val * 2), y1 - inc_val
-        elif (in_val == 3):
-            x2, y2 = x1 + inc_val, y1 - inc_val
+        if base == prev_base:
+            st_count += 1
+        else:
+            st_count = 0
+        
+        if st_count == 100:
+            print(f'st_count {base} reached 100.')
+            continue
+
+        prev_base = base
 
         dont_plot = 0
 
@@ -209,7 +181,7 @@ def generate_footprint(seq, option):
 
         if (np.abs(x2 - x1) < 100 and np.abs(y2 - y1) < 100):
             image = cv2.line(image, (x1, y1), (x2, y2),
-                             color=seq_color[in_val],
+                             color=seq_color[base],
                              thickness=line_thickness)
         x1, y1 = x2, y2
 
