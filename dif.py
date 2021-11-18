@@ -24,10 +24,10 @@ class Args(NamedTuple):
 
 class Options(NamedTuple):
     """ Settings """
-    imageSize: int  # Output image size, 30000 for big sequence
-    gainxy: float  # Zoom the sequence, this parameter is in development phase
-    seqColor: List[tuple]  # Color for 'A' , 'C', 'T', 'G'
-    maxNuclDistancePx: int  # Advance parameter: max distance of two nucletide in graph
+    image_size: int  # Output image size, 30000 for big sequence
+    gain_xy: float  # Zoom the sequence, this parameter is in development phase
+    seq_color: List[tuple]  # Color for 'A' , 'C', 'T', 'G'
+    max_nucl_distance_px: int  # Advance parameter: max distance of two nucletide in graph
 
 
 # --------------------------------------------------
@@ -102,88 +102,88 @@ def main():
 
     #generate image footprint for seq and save as test.png file
 
-    image = generateFootprint(record.seq[:args.plotsize], option)
+    image = generate_footprint(record.seq[:args.plotsize], option)
     cv2.imwrite(str(args.outfile), image)
     print("end of Generating image")
 
 
 # --------------------------------------------------
-def generateFootprint(seq, option):
+def generate_footprint(seq, option):
     """ Generate image from sequence """
 
-    initImageSize = option.imageSize
-    seqColor = option.seqColor
-    incVal = option.maxNuclDistancePx
-    gain = option.gainxy
-    incVal = int(gain * incVal)
+    init_image_size = option.image_size
+    seq_color = option.seq_color
+    inc_val = option.max_nucl_distance_px
+    gain = option.gain_xy
+    inc_val = int(gain * inc_val)
 
-    max_x = initImageSize
+    max_x = init_image_size
     min_x = 0
 
-    max_y = initImageSize
+    max_y = init_image_size
     min_y = 0
 
-    width, height = initImageSize, initImageSize
-    x1, y1 = int(initImageSize / 2), int(initImageSize / 2)
+    width, height = init_image_size, init_image_size
+    x1, y1 = int(init_image_size / 2), int(init_image_size / 2)
     image = np.zeros((height, width, 4), np.uint8)
 
     state = 'a'  #satte for many same nucletide in series TODO now deleted after 5000 sample
-    stCount = 0
+    st_count = 0
 
     for c in seq:
 
         if (c == 'a' or c == 'A'):
-            inVal = 0
+            in_val = 0
             if (state == 'a'):
-                stCount = stCount + 1
+                st_count = st_count + 1
             else:
-                stCount = 0
-            if (stCount == 100):
-                print("stCount a reach 5000")
+                st_count = 0
+            if (st_count == 100):
+                print("st_count a reach 5000")
                 continue
         elif (c == 'c' or c == 'C'):
-            inVal = 1
+            in_val = 1
             if (state == 'c'):
-                stCount = stCount + 1
+                st_count = st_count + 1
             else:
-                stCount = 0
-            if (stCount == 100):
-                print("stCount c reach 5000")
+                st_count = 0
+            if (st_count == 100):
+                print("st_count c reach 5000")
                 continue
         elif (c == 't' or c == 'T'):
-            inVal = 2
+            in_val = 2
             if (state == 't'):
-                stCount = stCount + 1
+                st_count = st_count + 1
             else:
-                stCount = 0
-            if (stCount == 100):
-                print("stCount t reach 5000")
+                st_count = 0
+            if (st_count == 100):
+                print("st_count t reach 5000")
                 continue
 
         elif (c == 'g' or c == 'G'):
-            inVal = 3
+            in_val = 3
             if (state == 'g'):
-                stCount = stCount + 1
+                st_count = st_count + 1
             else:
-                stCount = 0
-            if (stCount == 100):
-                print("stCount g reach 5000")
+                st_count = 0
+            if (st_count == 100):
+                print("st_count g reach 5000")
                 continue
         else:
             #print('error char is ',c)
             continue
 
-        #print(inVal)
-        if (inVal == 0):
-            x2, y2 = x1 + int(incVal * 2), y1 + incVal
-        elif (inVal == 1):
-            x2, y2 = x1 - incVal, y1 + incVal
-        elif (inVal == 2):
-            x2, y2 = x1 - int(incVal * 2), y1 - incVal
-        elif (inVal == 3):
-            x2, y2 = x1 + incVal, y1 - incVal
+        #print(in_val)
+        if (in_val == 0):
+            x2, y2 = x1 + int(inc_val * 2), y1 + inc_val
+        elif (in_val == 1):
+            x2, y2 = x1 - inc_val, y1 + inc_val
+        elif (in_val == 2):
+            x2, y2 = x1 - int(inc_val * 2), y1 - inc_val
+        elif (in_val == 3):
+            x2, y2 = x1 + inc_val, y1 - inc_val
 
-        dontplot = 0
+        dont_plot = 0
 
         if (max_x < x2):
             max_x = x2
@@ -209,7 +209,7 @@ def generateFootprint(seq, option):
 
         if (np.abs(x2 - x1) < 100 and np.abs(y2 - y1) < 100):
             image = cv2.line(image, (x1, y1), (x2, y2),
-                             color=seqColor[inVal],
+                             color=seq_color[in_val],
                              thickness=line_thickness)
         x1, y1 = x2, y2
 
