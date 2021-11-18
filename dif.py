@@ -10,7 +10,7 @@ import numpy as np
 import cv2  # python-opencv
 import random
 import argparse
-from typing import List, NamedTuple, TextIO
+from typing import List, NamedTuple, TextIO, Tuple
 
 
 class Args(NamedTuple):
@@ -26,12 +26,12 @@ class Options(NamedTuple):
     """ Settings """
     image_size: int  # Output image size, 30000 for big sequence
     gain_xy: float  # Zoom the sequence, this parameter is in development phase
-    seq_color: dict[tuple]  # Color for 'A' , 'C', 'T', 'G'
+    seq_color: dict[str, Tuple[int, int, int, int]]  # Color for 'A' , 'C', 'T', 'G'
     max_nucl_distance_px: int  # Advance parameter: max distance of two nucletide in graph
 
 
 # --------------------------------------------------
-def get_args():
+def get_args() -> Args:
     """Get command-line arguments"""
     parser = argparse.ArgumentParser(
         description='Convert DNA sequence to image')
@@ -79,7 +79,7 @@ def get_args():
 
 
 # --------------------------------------------------
-def main():
+def main() -> None:
     """The Good Stuff"""
 
     args = get_args()
@@ -108,7 +108,7 @@ def main():
 
 
 # --------------------------------------------------
-def generate_footprint(seq, option):
+def generate_footprint(seq: str, option: Options):
     """ Generate image from sequence """
 
     init_image_size = option.image_size
@@ -133,16 +133,7 @@ def generate_footprint(seq, option):
 
     for base in seq.lower():
 
-        if base == 'a':
-            x2, y2 = x1 + int(inc_val * 2), y1 + inc_val
-        elif base == 'c':
-            x2, y2 = x1 - inc_val, y1 + inc_val
-        elif base == 't':
-            x2, y2 = x1 - int(inc_val * 2), y1 - inc_val
-        elif base == 'g':
-            x2, y2 = x1 + inc_val, y1 - inc_val
-        else:
-            continue
+        x2, y2 = get_coords(inc_val, base, (x1, y1))
 
         if base == prev_base:
             st_count += 1
@@ -188,6 +179,25 @@ def generate_footprint(seq, option):
     print("x min max y min max", min_x, ',', max_x, ',', min_y, ',', max_y)
     return image
     #imshow(image)
+
+
+# --------------------------------------------------
+def get_coords(inc_val: int, base: str, current: Tuple[int, int]) -> Tuple[int, int]:
+    """ Get new coordinates based on nucleotide """
+
+    x1, y1 = current
+    if base == 'a':
+        x2, y2 = x1 + int(inc_val * 2), y1 + inc_val
+    elif base == 'c':
+        x2, y2 = x1 - inc_val, y1 + inc_val
+    elif base == 't':
+        x2, y2 = x1 - int(inc_val * 2), y1 - inc_val
+    elif base == 'g':
+        x2, y2 = x1 + inc_val, y1 - inc_val
+    else:
+        x2, y2 = x1, y1
+
+    return x2, y2
 
 
 # --------------------------------------------------
