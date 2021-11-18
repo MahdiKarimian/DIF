@@ -186,6 +186,7 @@ def get_coords(inc_val: int, base: str, current: Tuple[int, int]) -> Tuple[int, 
     """ Get new coordinates based on nucleotide """
 
     x1, y1 = current
+    
     if base == 'a':
         x2, y2 = x1 + int(inc_val * 2), y1 + inc_val
     elif base == 'c':
@@ -206,6 +207,8 @@ def test_get_coords() -> None:
 
     # Unrecognized residue
     assert get_coords(1, '', (0, 0)) == (0, 0)
+    assert get_coords(1, 'm', (0, 0)) == (0, 0)
+    assert get_coords(1, '', (5, 5)) == (5, 5)
 
     # Standard residues, increment = 1
     assert get_coords(1, 'a', (0, 0)) == (2, 1)
