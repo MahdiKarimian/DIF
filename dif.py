@@ -10,10 +10,10 @@ import numpy as np
 import cv2  # python-opencv
 # import random
 import argparse
-from typing import NamedTuple, TextIO, Tuple
-
+from typing import Dict, NamedTuple, TextIO, Tuple
 
 # pylint: disable=no-member
+
 
 class Args(NamedTuple):
     """ Command-line arguments """
@@ -30,6 +30,10 @@ class Options(NamedTuple):
     gain_xy: float  # Zoom the sequence, this parameter is in development phase
     seq_color: dict[str, Tuple[int, int, int, int]]  # Color for A, C, T, G
     max_nucl_dist: int  # Advance param: max distance of two nucletide in graph
+
+
+# class Steps(Dict[str, Tuple[int, int]]):
+#     """ Definition of how coords should change by base """
 
 
 # --------------------------------------------------
@@ -138,9 +142,11 @@ def generate_footprint(seq: str, option: Options):
     prev_base = ''
     st_count = 0
 
+    steps = get_steps(inc_val)
+
     for base in seq.lower():
 
-        x2, y2 = get_coords(inc_val, base, (x1, y1))
+        x2, y2 = get_coords(steps, base, (x1, y1))
 
         if base == prev_base:
             st_count += 1
@@ -189,46 +195,73 @@ def generate_footprint(seq: str, option: Options):
 
 
 # --------------------------------------------------
-def get_coords(inc_val: int, base: str,
+def get_steps(inc: int) -> Dict[str, Tuple[int, int]]:
+    """ Generate step dictionary from increment"""
+
+    # Steps dictionary where 'nuc': (dx, dy)
+    steps = {
+        'a': (inc * 2, inc),
+        'c': (-inc, inc),
+        't': (-inc * 2, -inc),
+        'g': (inc, -inc),
+    }
+
+    return steps
+
+
+# --------------------------------------------------
+def test_get_steps() -> None:
+    """ Test get_steps """
+
+    assert get_steps(1) == {
+        'a': (2, 1),
+        'c': (-1, 1),
+        't': (-2, -1),
+        'g': (1, -1)
+    }
+    assert get_steps(2) == {
+        'a': (4, 2),
+        'c': (-2, 2),
+        't': (-4, -2),
+        'g': (2, -2)
+    }
+
+
+# --------------------------------------------------
+def get_coords(steps: Dict[str, Tuple[int, int]], base: str,
                current: Tuple[int, int]) -> Tuple[int, int]:
     """ Get new coordinates based on nucleotide """
 
     x1, y1 = current
 
-    if base == 'a':
-        x2, y2 = x1 + int(inc_val * 2), y1 + inc_val
-    elif base == 'c':
-        x2, y2 = x1 - inc_val, y1 + inc_val
-    elif base == 't':
-        x2, y2 = x1 - int(inc_val * 2), y1 - inc_val
-    elif base == 'g':
-        x2, y2 = x1 + inc_val, y1 - inc_val
-    else:
-        x2, y2 = x1, y1
+    dx, dy = steps.get(base, (0, 0))
 
-    return x2, y2
+    return x1 + dx, y1 + dy
 
 
 # --------------------------------------------------
 def test_get_coords() -> None:
     """ Test get_coords """
 
+    steps = get_steps(1)
+    
     # Unrecognized residue
-    assert get_coords(1, '', (0, 0)) == (0, 0)
-    assert get_coords(1, 'm', (0, 0)) == (0, 0)
-    assert get_coords(1, '', (5, 5)) == (5, 5)
+    assert get_coords(steps, '', (0, 0)) == (0, 0)
+    assert get_coords(steps, 'm', (0, 0)) == (0, 0)
+    assert get_coords(steps, '', (5, 5)) == (5, 5)
 
     # Standard residues, increment = 1
-    assert get_coords(1, 'a', (0, 0)) == (2, 1)
-    assert get_coords(1, 'c', (0, 0)) == (-1, 1)
-    assert get_coords(1, 't', (0, 0)) == (-2, -1)
-    assert get_coords(1, 'g', (0, 0)) == (1, -1)
+    assert get_coords(steps, 'a', (0, 0)) == (2, 1)
+    assert get_coords(steps, 'c', (0, 0)) == (-1, 1)
+    assert get_coords(steps, 't', (0, 0)) == (-2, -1)
+    assert get_coords(steps, 'g', (0, 0)) == (1, -1)
 
     # Standard residues, increment = 2
-    assert get_coords(2, 'a', (0, 0)) == (4, 2)
-    assert get_coords(2, 'c', (0, 0)) == (-2, 2)
-    assert get_coords(2, 't', (0, 0)) == (-4, -2)
-    assert get_coords(2, 'g', (0, 0)) == (2, -2)
+    steps = get_steps(2)
+    assert get_coords(steps, 'a', (0, 0)) == (4, 2)
+    assert get_coords(steps, 'c', (0, 0)) == (-2, 2)
+    assert get_coords(steps, 't', (0, 0)) == (-4, -2)
+    assert get_coords(steps, 'g', (0, 0)) == (2, -2)
 
 
 # --------------------------------------------------
