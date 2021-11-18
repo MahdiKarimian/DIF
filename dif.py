@@ -32,10 +32,6 @@ class Options(NamedTuple):
     max_nucl_dist: int  # Advance param: max distance of two nucletide in graph
 
 
-# class Steps(Dict[str, Tuple[int, int]]):
-#     """ Definition of how coords should change by base """
-
-
 # --------------------------------------------------
 def get_args() -> Args:
     """Get command-line arguments"""
