@@ -5,13 +5,15 @@ Purpose: Convert DNA sequence to image
 """
 
 from Bio import SeqIO
-from matplotlib.pyplot import imshow
+# from matplotlib.pyplot import imshow
 import numpy as np
 import cv2  # python-opencv
-import random
+# import random
 import argparse
-from typing import List, NamedTuple, TextIO, Tuple
+from typing import NamedTuple, TextIO, Tuple
 
+
+# pylint: disable=no-member
 
 class Args(NamedTuple):
     """ Command-line arguments """
@@ -26,8 +28,8 @@ class Options(NamedTuple):
     """ Settings """
     image_size: int  # Output image size, 30000 for big sequence
     gain_xy: float  # Zoom the sequence, this parameter is in development phase
-    seq_color: dict[str, Tuple[int, int, int, int]]  # Color for 'A' , 'C', 'T', 'G'
-    max_nucl_distance_px: int  # Advance parameter: max distance of two nucletide in graph
+    seq_color: dict[str, Tuple[int, int, int, int]]  # Color for A, C, T, G
+    max_nucl_dist: int  # Advance param: max distance of two nucletide in graph
 
 
 # --------------------------------------------------
@@ -84,23 +86,27 @@ def main() -> None:
 
     args = get_args()
 
-    option = Options(args.size, 0.2, {'a': (255, 0, 0, 255),'c': (0, 255, 0, 255),
-                                      't': (0, 0, 255, 255), 'g': (128, 128, 128, 255)},
-                     5)
+    option = Options(
+        args.size, 0.2, {
+            'a': (255, 0, 0, 255),
+            'c': (0, 255, 0, 255),
+            't': (0, 0, 255, 255),
+            'g': (128, 128, 128, 255)
+        }, 5)
 
     # if you want another seq
     for record in SeqIO.parse(args.file, "fasta"):
-        if (record.id == args.recordid):
+        if record.id == args.recordid:
             print(record.id)
             break
-        elif (args.recordid == '*'):
+        if args.recordid == '*':
             break
 
-    #record.seq
+    # record.seq
     len(record.seq)
-    print("Select this record {} ".format(record.id))
+    print(f"Select this record {record.id} ")
 
-    #generate image footprint for seq and save as test.png file
+    # generate image footprint for seq and save as test.png file
 
     image = generate_footprint(record.seq[:args.plotsize], option)
     cv2.imwrite(str(args.outfile), image)
@@ -113,7 +119,7 @@ def generate_footprint(seq: str, option: Options):
 
     init_image_size = option.image_size
     seq_color = option.seq_color
-    inc_val = option.max_nucl_distance_px
+    inc_val = option.max_nucl_dist
     gain = option.gain_xy
     inc_val = int(gain * inc_val)
 
@@ -127,7 +133,8 @@ def generate_footprint(seq: str, option: Options):
     x1, y1 = int(init_image_size / 2), int(init_image_size / 2)
     image = np.zeros((height, width, 4), np.uint8)
 
-    state = 'a'  #satte for many same nucletide in series TODO now deleted after 5000 sample
+    # Variables to find many same nucleotide in series TODO
+    # now deleted after 5000 sample
     prev_base = ''
     st_count = 0
 
@@ -139,38 +146,38 @@ def generate_footprint(seq: str, option: Options):
             st_count += 1
         else:
             st_count = 0
-        
+
         if st_count == 100:
             print(f'st_count {base} reached 100.')
             continue
 
         prev_base = base
 
-        dont_plot = 0
+        # dont_plot = 0
 
-        if (max_x < x2):
+        if max_x < x2:
             max_x = x2
             x2 = 0 + 50
-            #dontplot = 1
+            # dontplot = 1
 
-        if (max_y < y2):
+        if max_y < y2:
             max_y = y2
             y2 = 0 + 50
-            #dontplot = 1
+            # dontplot = 1
 
-        if (min_x > x2):
+        if min_x > x2:
             min_x = x2
             x2 = max_x - 50
-            #dontplot = 1
+            # dontplot = 1
 
-        if (min_y > y2):
+        if min_y > y2:
             min_y = y2
             y2 = max_y - 50
-            #dontplot = 1
+            # dontplot = 1
 
         line_thickness = 3
 
-        if (np.abs(x2 - x1) < 100 and np.abs(y2 - y1) < 100):
+        if np.abs(x2 - x1) < 100 and np.abs(y2 - y1) < 100:
             image = cv2.line(image, (x1, y1), (x2, y2),
                              color=seq_color[base],
                              thickness=line_thickness)
@@ -178,15 +185,16 @@ def generate_footprint(seq: str, option: Options):
 
     print("x min max y min max", min_x, ',', max_x, ',', min_y, ',', max_y)
     return image
-    #imshow(image)
+    # imshow(image)
 
 
 # --------------------------------------------------
-def get_coords(inc_val: int, base: str, current: Tuple[int, int]) -> Tuple[int, int]:
+def get_coords(inc_val: int, base: str,
+               current: Tuple[int, int]) -> Tuple[int, int]:
     """ Get new coordinates based on nucleotide """
 
     x1, y1 = current
-    
+
     if base == 'a':
         x2, y2 = x1 + int(inc_val * 2), y1 + inc_val
     elif base == 'c':

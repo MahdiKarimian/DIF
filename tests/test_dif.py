@@ -11,6 +11,7 @@ PRG = './dif.py'
 RUN = f'python3 {PRG}' if platform.system() == 'Windows' else PRG
 INPUT1 = 'tests/inputs/file1.fa'
 
+
 # --------------------------------------------------
 def test_exists() -> None:
     """ Program exists """
@@ -52,11 +53,10 @@ def test_bad_file() -> None:
 def test_missing_outfile() -> None:
     """ Die on missing --outfile """
 
-    bad = random_filename()
     retval, out = getstatusoutput(f'{RUN} {INPUT1}')
     assert retval != 0
     assert re.match('usage:', out, re.IGNORECASE)
-    assert re.search(f"required: -o/--outfile", out)
+    assert re.search("required: -o/--outfile", out)
 
 
 # --------------------------------------------------
@@ -64,7 +64,8 @@ def test_bad_size() -> None:
     """ Die on missing input """
 
     for bad_size in [random.randint(0, 999), random.randint(30001, 50000)]:
-        retval, out = getstatusoutput(f'{RUN} -o foo.png --size {bad_size} {INPUT1}')
+        retval, out = getstatusoutput(
+            f'{RUN} -o foo.png --size {bad_size} {INPUT1}')
         assert retval != 0
         assert re.match('usage:', out, re.IGNORECASE)
         assert re.search(fr"error: --size \({bad_size}\) must be between", out)
