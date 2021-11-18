@@ -201,5 +201,25 @@ def get_coords(inc_val: int, base: str, current: Tuple[int, int]) -> Tuple[int, 
 
 
 # --------------------------------------------------
+def test_get_coords() -> None:
+    """ Test get_coords """
+
+    # Unrecognized residue
+    assert get_coords(1, '', (0, 0)) == (0, 0)
+
+    # Standard residues, increment = 1
+    assert get_coords(1, 'a', (0, 0)) == (2, 1)
+    assert get_coords(1, 'c', (0, 0)) == (-1, 1)
+    assert get_coords(1, 't', (0, 0)) == (-2, -1)
+    assert get_coords(1, 'g', (0, 0)) == (1, -1)
+
+    # Standard residues, increment = 2
+    assert get_coords(2, 'a', (0, 0)) == (4, 2)
+    assert get_coords(2, 'c', (0, 0)) == (-2, 2)
+    assert get_coords(2, 't', (0, 0)) == (-4, -2)
+    assert get_coords(2, 'g', (0, 0)) == (2, -2)
+
+
+# --------------------------------------------------
 if __name__ == '__main__':
     main()
