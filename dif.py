@@ -118,6 +118,8 @@ def main() -> None:
                    f' in file "{in_file.name}".')
         sys.exit(msg)
 
+    print(f"Select this record {select_id} ")
+
     # generate image footprint for seq and save as test.png file
 
     image = generate_footprint(record.seq[:args.plotsize], option)
