@@ -5,12 +5,14 @@ Purpose: Convert DNA sequence to image
 """
 
 from Bio import SeqIO
-from matplotlib.pyplot import imshow
+# from matplotlib.pyplot import imshow
 import numpy as np
 import cv2  # python-opencv
-import random
+# import random
 import argparse
-from typing import List, NamedTuple, TextIO
+from typing import Dict, NamedTuple, TextIO, Tuple
+
+# pylint: disable=no-member
 
 
 class Args(NamedTuple):
@@ -24,14 +26,14 @@ class Args(NamedTuple):
 
 class Options(NamedTuple):
     """ Settings """
-    imageSize: int  # Output image size, 30000 for big sequence
-    gainxy: float  # Zoom the sequence, this parameter is in development phase
-    seqColor: List[tuple]  # Color for 'A' , 'C', 'T', 'G'
-    maxNuclDistancePx: int  # Advance parameter: max distance of two nucletide in graph
+    image_size: int  # Output image size, 30000 for big sequence
+    gain_xy: float  # Zoom the sequence, this parameter is in development phase
+    seq_color: dict[str, Tuple[int, int, int, int]]  # Color for A, C, T, G
+    max_nucl_dist: int  # Advance param: max distance of two nucletide in graph
 
 
 # --------------------------------------------------
-def get_args():
+def get_args() -> Args:
     """Get command-line arguments"""
     parser = argparse.ArgumentParser(
         description='Convert DNA sequence to image')
@@ -79,143 +81,183 @@ def get_args():
 
 
 # --------------------------------------------------
-def main():
+def main() -> None:
     """The Good Stuff"""
 
     args = get_args()
 
-    option = Options(args.size, 0.2, [(255, 0, 0, 255), (0, 255, 0, 255),
-                                      (0, 0, 255, 255), (128, 128, 128, 255)],
-                     5)
+    option = Options(
+        args.size, 0.2, {
+            'a': (255, 0, 0, 255),
+            'c': (0, 255, 0, 255),
+            't': (0, 0, 255, 255),
+            'g': (128, 128, 128, 255)
+        }, 5)
 
     # if you want another seq
     for record in SeqIO.parse(args.file, "fasta"):
-        if (record.id == args.recordid):
+        if record.id == args.recordid:
             print(record.id)
             break
-        elif (args.recordid == '*'):
+        if args.recordid == '*':
             break
 
-    #record.seq
+    # record.seq
     len(record.seq)
-    print("Select this record {} ".format(record.id))
+    print(f"Select this record {record.id} ")
 
-    #generate image footprint for seq and save as test.png file
+    # generate image footprint for seq and save as test.png file
 
-    image = generateFootprint(record.seq[:args.plotsize], option)
+    image = generate_footprint(record.seq[:args.plotsize], option)
     cv2.imwrite(str(args.outfile), image)
     print("end of Generating image")
 
 
 # --------------------------------------------------
-def generateFootprint(seq, option):
+def generate_footprint(seq: str, option: Options):
     """ Generate image from sequence """
 
-    initImageSize = option.imageSize
-    seqColor = option.seqColor
-    incVal = option.maxNuclDistancePx
-    gain = option.gainxy
-    incVal = int(gain * incVal)
+    init_image_size = option.image_size
+    seq_color = option.seq_color
+    inc_val = option.max_nucl_dist
+    gain = option.gain_xy
+    inc_val = int(gain * inc_val)
 
-    max_x = initImageSize
+    max_x = init_image_size
     min_x = 0
 
-    max_y = initImageSize
+    max_y = init_image_size
     min_y = 0
 
-    width, height = initImageSize, initImageSize
-    x1, y1 = int(initImageSize / 2), int(initImageSize / 2)
+    width, height = init_image_size, init_image_size
+    x1, y1 = int(init_image_size / 2), int(init_image_size / 2)
     image = np.zeros((height, width, 4), np.uint8)
 
-    state = 'a'  #satte for many same nucletide in series TODO now deleted after 5000 sample
-    stCount = 0
+    # Variables to find many same nucleotide in series TODO
+    # now deleted after 5000 sample
+    prev_base = ''
+    st_count = 0
 
-    for c in seq:
+    steps = get_steps(inc_val)
 
-        if (c == 'a' or c == 'A'):
-            inVal = 0
-            if (state == 'a'):
-                stCount = stCount + 1
-            else:
-                stCount = 0
-            if (stCount == 100):
-                print("stCount a reach 5000")
-                continue
-        elif (c == 'c' or c == 'C'):
-            inVal = 1
-            if (state == 'c'):
-                stCount = stCount + 1
-            else:
-                stCount = 0
-            if (stCount == 100):
-                print("stCount c reach 5000")
-                continue
-        elif (c == 't' or c == 'T'):
-            inVal = 2
-            if (state == 't'):
-                stCount = stCount + 1
-            else:
-                stCount = 0
-            if (stCount == 100):
-                print("stCount t reach 5000")
-                continue
+    for base in seq.lower():
 
-        elif (c == 'g' or c == 'G'):
-            inVal = 3
-            if (state == 'g'):
-                stCount = stCount + 1
-            else:
-                stCount = 0
-            if (stCount == 100):
-                print("stCount g reach 5000")
-                continue
+        x2, y2 = get_coords(steps, base, (x1, y1))
+
+        if base == prev_base:
+            st_count += 1
         else:
-            #print('error char is ',c)
+            st_count = 0
+
+        if st_count == 100:
+            print(f'st_count {base} reached 100.')
             continue
 
-        #print(inVal)
-        if (inVal == 0):
-            x2, y2 = x1 + int(incVal * 2), y1 + incVal
-        elif (inVal == 1):
-            x2, y2 = x1 - incVal, y1 + incVal
-        elif (inVal == 2):
-            x2, y2 = x1 - int(incVal * 2), y1 - incVal
-        elif (inVal == 3):
-            x2, y2 = x1 + incVal, y1 - incVal
+        prev_base = base
 
-        dontplot = 0
+        # dont_plot = 0
 
-        if (max_x < x2):
+        if max_x < x2:
             max_x = x2
             x2 = 0 + 50
-            #dontplot = 1
+            # dontplot = 1
 
-        if (max_y < y2):
+        if max_y < y2:
             max_y = y2
             y2 = 0 + 50
-            #dontplot = 1
+            # dontplot = 1
 
-        if (min_x > x2):
+        if min_x > x2:
             min_x = x2
             x2 = max_x - 50
-            #dontplot = 1
+            # dontplot = 1
 
-        if (min_y > y2):
+        if min_y > y2:
             min_y = y2
             y2 = max_y - 50
-            #dontplot = 1
+            # dontplot = 1
 
         line_thickness = 3
 
-        if (np.abs(x2 - x1) < 100 and np.abs(y2 - y1) < 100):
+        if np.abs(x2 - x1) < 100 and np.abs(y2 - y1) < 100:
             image = cv2.line(image, (x1, y1), (x2, y2),
-                             color=seqColor[inVal],
+                             color=seq_color[base],
                              thickness=line_thickness)
         x1, y1 = x2, y2
 
     print("x min max y min max", min_x, ',', max_x, ',', min_y, ',', max_y)
     return image
-    #imshow(image)
+    # imshow(image)
+
+
+# --------------------------------------------------
+def get_steps(inc: int) -> Dict[str, Tuple[int, int]]:
+    """ Generate step dictionary from increment"""
+
+    # Steps dictionary where 'nuc': (dx, dy)
+    steps = {
+        'a': (inc * 2, inc),
+        'c': (-inc, inc),
+        't': (-inc * 2, -inc),
+        'g': (inc, -inc),
+    }
+
+    return steps
+
+
+# --------------------------------------------------
+def test_get_steps() -> None:
+    """ Test get_steps """
+
+    assert get_steps(1) == {
+        'a': (2, 1),
+        'c': (-1, 1),
+        't': (-2, -1),
+        'g': (1, -1)
+    }
+    assert get_steps(2) == {
+        'a': (4, 2),
+        'c': (-2, 2),
+        't': (-4, -2),
+        'g': (2, -2)
+    }
+
+
+# --------------------------------------------------
+def get_coords(steps: Dict[str, Tuple[int, int]], base: str,
+               current: Tuple[int, int]) -> Tuple[int, int]:
+    """ Get new coordinates based on nucleotide """
+
+    x1, y1 = current
+
+    dx, dy = steps.get(base, (0, 0))
+
+    return x1 + dx, y1 + dy
+
+
+# --------------------------------------------------
+def test_get_coords() -> None:
+    """ Test get_coords """
+
+    steps = get_steps(1)
+
+    # Unrecognized residue
+    assert get_coords(steps, '', (0, 0)) == (0, 0)
+    assert get_coords(steps, 'm', (0, 0)) == (0, 0)
+    assert get_coords(steps, '', (5, 5)) == (5, 5)
+
+    # Standard residues, increment = 1
+    assert get_coords(steps, 'a', (0, 0)) == (2, 1)
+    assert get_coords(steps, 'c', (0, 0)) == (-1, 1)
+    assert get_coords(steps, 't', (0, 0)) == (-2, -1)
+    assert get_coords(steps, 'g', (0, 0)) == (1, -1)
+
+    # Standard residues, increment = 2
+    steps = get_steps(2)
+    assert get_coords(steps, 'a', (0, 0)) == (4, 2)
+    assert get_coords(steps, 'c', (0, 0)) == (-2, 2)
+    assert get_coords(steps, 't', (0, 0)) == (-4, -2)
+    assert get_coords(steps, 'g', (0, 0)) == (2, -2)
 
 
 # --------------------------------------------------

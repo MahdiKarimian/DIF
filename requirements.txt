@@ -1,4 +1,12 @@
 biopython
+flake8==3.9.2
 matplotlib
+mypy
 numpy
 opencv-python
+pylint
+pytest
+pytest-flake8
+pytest-mypy
+pytest-pylint
+yapf
