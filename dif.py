@@ -28,7 +28,7 @@ class Options(NamedTuple):
     """ Settings """
     image_size: int  # Output image size, 30000 for big sequence
     gain_xy: float  # Zoom the sequence, this parameter is in development phase
-    seq_color: dict[str, Tuple[int, int, int, int]]  # Color for A, C, T, G
+    seq_color: dict # TODO Not work with python 3.8 [str, Tuple[int, int, int, int]]  # Color for A, C, T, G
     max_nucl_dist: int  # Advance param: max distance of two nucletide in graph
 
 
