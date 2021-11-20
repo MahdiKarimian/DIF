@@ -10,6 +10,7 @@ from subprocess import getstatusoutput
 PRG = './dif.py'
 RUN = f'python3 {PRG}' if platform.system() == 'Windows' else PRG
 INPUT1 = 'tests/inputs/file1.fa'
+EMPTY = 'tests/inputs/empty.fa'
 
 
 # --------------------------------------------------
@@ -42,7 +43,7 @@ def test_dies_no_args() -> None:
 def test_bad_file() -> None:
     """ Die on bad input file """
 
-    bad = random_filename()
+    bad = random_string()
     retval, out = getstatusoutput(f'{RUN} -o foo.png {bad}')
     assert retval != 0
     assert re.match('usage:', out, re.IGNORECASE)
@@ -72,7 +73,26 @@ def test_bad_size() -> None:
 
 
 # --------------------------------------------------
-def random_filename() -> str:
-    """ Generate a random filename """
+def test_empty_file() -> None:
+    """ Die on empty input file """
+
+    retval, out = getstatusoutput(f'{RUN} -o foo.png {EMPTY}')
+    assert retval != 0
+    assert re.search(f'No records found in file "{EMPTY}"', out)
+
+
+# --------------------------------------------------
+def test_record_not_found() -> None:
+    """ Dies when --recordid is not found """
+
+    bad = random_string()
+    retval, out = getstatusoutput(f'{RUN} -o foo.png -r {bad} {INPUT1}')
+    assert retval != 0
+    assert re.search(f'--recordid "{bad}" not found', out)
+
+
+# --------------------------------------------------
+def random_string() -> str:
+    """ Generate a random string """
 
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
