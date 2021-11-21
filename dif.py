@@ -10,6 +10,7 @@ import numpy as np
 import cv2  # python-opencv
 # import random
 import argparse
+import sys
 from typing import Dict, NamedTuple, TextIO, Tuple
 
 # pylint: disable=no-member
@@ -28,7 +29,7 @@ class Options(NamedTuple):
     """ Settings """
     image_size: int  # Output image size, 30000 for big sequence
     gain_xy: float  # Zoom the sequence, this parameter is in development phase
-    seq_color: dict # TODO Not work with python 3.8 [str, Tuple[int, int, int, int]]  # Color for A, C, T, G
+    seq_color: Dict[str, Tuple[int, int, int, int]]  # Color for A, C, T, G
     max_nucl_dist: int  # Advance param: max distance of two nucletide in graph
 
 
@@ -61,8 +62,8 @@ def get_args() -> Args:
                         '--recordid',
                         type=str,
                         metavar='SEQ',
-                        default='*',
-                        help='Record ID')
+                        default=None,
+                        help='Record ID (Default: first record)')
 
     parser.add_argument('-p',
                         '--plotsize',
@@ -85,6 +86,8 @@ def main() -> None:
     """The Good Stuff"""
 
     args = get_args()
+    select_id = args.recordid
+    in_file = args.file
 
     option = Options(
         args.size, 0.2, {
@@ -95,16 +98,27 @@ def main() -> None:
         }, 5)
 
     # if you want another seq
-    for record in SeqIO.parse(args.file, "fasta"):
-        if record.id == args.recordid:
-            print(record.id)
+    record: SeqIO.SeqRecord = None
+    rec_count: int = 0
+    for rec in SeqIO.parse(in_file, 'fasta'):
+        rec_count += 1
+        if not select_id:
+            record = rec
             break
-        if args.recordid == '*':
+        if rec.id == select_id:
+            record = rec
             break
 
-    # record.seq
-    len(record.seq)
-    print(f"Select this record {record.id} ")
+    if not record:
+        msg = ''
+        if not rec_count:
+            msg = f'No records found in file "{in_file.name}".'
+        if select_id and rec_count:
+            msg = (f'--recordid "{select_id}" not found'
+                   f' in file "{in_file.name}".')
+        sys.exit(msg)
+
+    print(f"Select this record {select_id} ")
 
     # generate image footprint for seq and save as test.png file
 
