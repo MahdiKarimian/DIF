@@ -156,6 +156,9 @@ def generate_footprint(seq: str, option: Options):
 
     for base in seq.lower():
 
+        if(base == 'n'):   #TODO for simplicity we bypass N and n in the sequence
+            continue
+
         x2, y2 = get_coords(steps, base, (x1, y1))
 
         if base == prev_base:
