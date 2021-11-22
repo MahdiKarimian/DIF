@@ -13,7 +13,7 @@ pip install -r requirements.txt
 Then run the code for Fasta file sample
 
 ```` 
-python dif.py -o test.png -i sequence.fasta -size 1000
+python dif.py sequence.fasta -o test.png
 ```` 
 You should see a test.png like this in folder
 
@@ -25,7 +25,7 @@ The other option is using **DnaFootprint.ipynb** file with Jupyter
 #### Advance option
 
 ```` 
-python dif.py -o test.png -i sequence.fasta -size 1000 -plotsize 4000000
+python dif.py sequence.fasta -o test.png -size 1000 -plotsize 4000000
 ```` 
 
 ##### plotsize
@@ -49,6 +49,12 @@ For example, with this footprint, we can compare the sequence of "Human Genome" 
 
 !["Human Genome" and "Chimpanzee Genome"](./img/hu_chi3.png)
 
+
+#### Finding similar sequence in mutated sequence 
+
+The second sequence mutated with 5% and 29%. 
+
+!["find similar sequence in other sequence"](./img/compare_and_find.png)
 
 ### Mutation detection algorithm
 The other application is mutation detection. I tested this image footprint for highly mutated sequences and 3 results are shown here:
